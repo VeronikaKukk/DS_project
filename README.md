@@ -1,1 +1,1 @@
-# andmeteadus_projekt
+# DS_projekt
