@@ -13,6 +13,8 @@ def getAPI_key():
 def get_game_info(game_info):
     if(game_info != None):
         if("info" in game_info and "metadata" in game_info):
+            if(len(game_info["info"]["frames"]) < 2):
+                return None
             timeline = game_info["info"]["frames"]
         
             matchId = game_info["metadata"]["matchId"]
@@ -127,7 +129,8 @@ def get_game_info(game_info):
                                 blueWins = 1
                                 
             
-            
+            if(timestamp < 300000):
+                return None
             for i in range(0,10,1):
                 if(i < 5):
                     blueAvgLevel += level[i]
@@ -188,7 +191,6 @@ def read_summoners():
     api_link_summoners = "https://eun1.api.riotgames.com/lol/league/v4/entries/RANKED_SOLO_5x5/DIAMOND/I?page=1&api_key=" + getAPI_key()
     resp = requests.get(api_link_summoners)
     summoner_in_tier_info = resp.json()
-    summonerIds = []
     with open('summonerIds.txt',"w") as fp:
         for summoner in summoner_in_tier_info:
             id_summ = summoner["summonerId"]
@@ -225,8 +227,6 @@ def read_gameIds():
         for game in gameIds:
             fp.write(game+"\n")
 
-import json
-
 def read_timelines():
     api_link_timelines = "https://europe.api.riotgames.com/lol/match/v5/matches/"
     games = []
@@ -242,12 +242,11 @@ def read_timelines():
             else:
                 time.sleep(1)
     df = pd.DataFrame(games)
-    filepath = Path('train.csv')  
+    filepath = Path('eune_data1.csv')  
     filepath.parent.mkdir(parents=True, exist_ok=True)  
     df.to_csv(filepath) 
 
-# execute in this order
-#read_summoners()
-#read_summoner_puuids()
-#read_gameIds()
-#read_timelines()
+read_summoners()
+read_summoner_puuids()
+read_gameIds()
+read_timelines()
