@@ -88,12 +88,12 @@ def get_game_info(game_info):
                                 wardsDestroyed[(int)(event["killerId"])-1] += 1
                             elif(event["type"] == "ELITE_MONSTER_KILL"):
                                 if(event["monsterType"] == "DRAGON"):
-                                    if(event["killerTeamId"] == "100"):
+                                    if(event["killerTeamId"] == 100):
                                         blueDragons += 1
                                     else:
                                         redDragons += 1
                                 elif(event["monsterType"] == "RIFTHERALD"):
-                                    if(event["killerTeamId"] == "100"):
+                                    if(event["killerTeamId"] == 100):
                                         blueHeralds += 1
                                     else:
                                         redHeralds += 1
