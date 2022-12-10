@@ -5,10 +5,10 @@ This project has been made as a group project for University of Tartu course LTA
 
 The main idea of the project is to predict League of Legends (LoL) game winner (blue or red) based on the first ten minutes of the match. 
 LoL has a system of ranking players
-based on their skills and to make the predicting more accurate we chose to take one of the highest ranks/skill levels as our focus. 
-The higher the rank, the more players make conscious choices. Therefore choosing higher rank is desired for our project. 
-There are also servers (regions) in LoL and we looked at Europe servers (EUNE and EUW) as it is the most relevant to us. 
-We chose to take data from ranked solo games in Diamond I elo from EUNE and EUW. \
+based on their skill and to make the predicting more accurate we chose to take one of the highest ranks/skill levels as our focus. 
+The higher the rank, the more players make conscious choices. Therefore choosing a higher rank is desired for our project. 
+There are also servers (regions) in LoL and we looked at European servers (EUNE and EUW) as it is the most relevant to us. 
+We chose to take data from ranked solo/duo games in Diamond I elo from EUNE and EUW. \
 In addition to predicting the game winner we also wanted to look into
 differences between EUNE and EUW servers based on our data. The reason for this was to find out which server has better players (based on our data) in Diamond I elo.
 
