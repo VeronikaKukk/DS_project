@@ -5,20 +5,25 @@ Created on Tue Nov  1 23:14:04 2022
 @author: kukkv
 """
 
+# Get the API key from api_key.txt
 def getAPI_key():
     f = open("api_key.txt","r")
     return f.read()
 
-
+# Get the 40 attributes of the game based on game_info timeline
 def get_game_info(game_info):
+    # If game_info is empty, there is nothing to look at
     if(game_info != None):
         if("info" in game_info and "metadata" in game_info):
+            # Some of the games had corrupted data, so we exclude those
             if(len(game_info["info"]["frames"]) < 2):
                 return None
+            # Game timeline is in the info -> frames
             timeline = game_info["info"]["frames"]
-        
+            # We save the matchId so that it can be used later if needed to look up a game
             matchId = game_info["metadata"]["matchId"]
             
+            # Defining all the attributes
             blueWardsPlaced = 0 
             blueWardsDestroyed = 0
             blueFirstBlood = 0 
@@ -69,23 +74,30 @@ def get_game_info(game_info):
             wardsPlaced = [0,0,0,0,0,0,0,0,0,0]
             wardsDestroyed = [0,0,0,0,0,0,0,0,0,0]
             
-        
+            # Looking at the timeline
             timestamp = 0
             for x in timeline:
+                # If the timestamp is bigger than 600000 then it means that it has passed the first 10 minutes of the game
                 if(x["timestamp"] <= 600000):
                     timestamp = x["timestamp"]
+                    # Timestamp has a summary for each player
                     for i in range(0,10,1):
                         jungleMinionsKilled[i] = x["participantFrames"][str(i+1)]["jungleMinionsKilled"]
                         minionsKilled[i] = x["participantFrames"][str(i+1)]["minionsKilled"]
                         totalGold[i] = x["participantFrames"][str(i+1)]["totalGold"]
                         level[i] = x["participantFrames"][str(i+1)]["level"]
                         totalExperience[i] = x["participantFrames"][str(i+1)]["xp"]
+                    # Timestamp has events
                     for event in x["events"]:
+                        # If event has a type, then we are interested in it, otherwise there is no data to look at
                         if("type" in event):
+                            # Placing a ward
                             if(event["type"] == "WARD_PLACED" ):
                                 wardsPlaced[(int)(event["creatorId"])-1] += 1
+                            # Destroying a ward
                             elif(event["type"] == "WARD_KILL"):
                                 wardsDestroyed[(int)(event["killerId"])-1] += 1
+                            # Killing a dragon or herald
                             elif(event["type"] == "ELITE_MONSTER_KILL"):
                                 if(event["monsterType"] == "DRAGON"):
                                     if(event["killerTeamId"] == 100):
@@ -97,11 +109,13 @@ def get_game_info(game_info):
                                         blueHeralds += 1
                                     else:
                                         redHeralds += 1
+                            # Destroying a tower
                             elif(event["type"] == "BUILDING_KILL" and event["buildingType"]=="TOWER_BUILDING"):
                                 if((int)(event["killerId"]) > 5):
                                     redTowersDestroyed += 1
                                 else:
                                     blueTowersDestroyed += 1
+                            # Killing a champion and assisting in killing
                             elif(event["type"]=="CHAMPION_KILL" ):
                                 if((int)(event["killerId"]) > 5):
                                     redKills += 1
@@ -113,6 +127,7 @@ def get_game_info(game_info):
                                     if("assistingParticipantIds" in event):
                                         blueAssists += len(event["assistingParticipantIds"])
                                     redDeaths += 1
+                            # Checking the team of first blood
                             elif("killType" in event):
                                 if(event["killType"] == "KILL_FIRST_BLOOD"):
                                     if((int) (event["killerId"]) > 5):
@@ -123,14 +138,16 @@ def get_game_info(game_info):
                                 if(event["winningTeam"] == 100):
                                     blueWins = 1
                 else:
+                    # Checking the game winner
                     for event in x["events"]:
                         if(event["type"] == "GAME_END"):
                             if(event["winningTeam"] == 100):
                                 blueWins = 1
                                 
-            
+            # If last timestamp was was less than 300000, then we do not want that game in our dataset
             if(timestamp < 300000):
                 return None
+            # Additional calcucaltions for attributes
             for i in range(0,10,1):
                 if(i < 5):
                     blueAvgLevel += level[i]
@@ -161,7 +178,7 @@ def get_game_info(game_info):
             blueCSPerMin = blueTotalMinionsKilled / (timestamp/60000)
             redGoldPerMin = redTotalGold / (timestamp/60000)
             blueGoldPerMin = blueTotalGold / (timestamp/60000) 
-            
+            # Game info
             game = {"matchId": matchId, "blueWardsPlaced":blueWardsPlaced,"blueWardsDestroyed":blueWardsDestroyed,
                     "blueFirstBlood":blueFirstBlood,"blueKills":blueKills,"blueDeaths":blueDeaths,
                     "blueAssists":blueAssists,"blueDragons":blueDragons,"blueHeralds":blueHeralds,
@@ -186,8 +203,10 @@ import pandas as pd
 import time
 from pathlib import Path 
 
+# Requesting summonerId-s in Diamond I
 def read_summoners():
     # change page= to get next page of players from Diamond I eune
+    # change the eun1 to euw1 for euw players
     api_link_summoners = "https://eun1.api.riotgames.com/lol/league/v4/entries/RANKED_SOLO_5x5/DIAMOND/I?page=1&api_key=" + getAPI_key()
     resp = requests.get(api_link_summoners)
     summoner_in_tier_info = resp.json()
@@ -195,8 +214,9 @@ def read_summoners():
         for summoner in summoner_in_tier_info:
             id_summ = summoner["summonerId"]
             fp.write(id_summ+"\n")
-
+# Requesting summoner puuid based on summonerId
 def read_summoner_puuids():
+    # change the eun1 to euw1 for euw players
     api_link_puuids = "https://eun1.api.riotgames.com/lol/summoner/v4/summoners/"
     summonerPuuids = []
     with open('summonerIds.txt',"r") as fp:
@@ -211,7 +231,7 @@ def read_summoner_puuids():
     with open('summonerPuuids.txt',"w") as fp:
         for ids in summonerPuuids:
             fp.write(ids+"\n")
-
+# Request last 20 ranked games based on summoner puuid
 def read_gameIds():
     api_link_gameIds = "https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/"
     gameIds = []
@@ -227,6 +247,7 @@ def read_gameIds():
         for game in gameIds:
             fp.write(game+"\n")
 
+# Request game timeline based on matchId
 def read_timelines():
     api_link_timelines = "https://europe.api.riotgames.com/lol/match/v5/matches/"
     games = []
@@ -245,8 +266,8 @@ def read_timelines():
     filepath = Path('eune_data1.csv')  
     filepath.parent.mkdir(parents=True, exist_ok=True)  
     df.to_csv(filepath) 
-
-read_summoners()
-read_summoner_puuids()
-read_gameIds()
-read_timelines()
+# Uncomment and run in this order, also API key is required to get data
+#read_summoners()
+#read_summoner_puuids()
+#read_gameIds()
+#read_timelines()
